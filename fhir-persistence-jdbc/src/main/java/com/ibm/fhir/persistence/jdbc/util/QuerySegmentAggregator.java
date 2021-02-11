@@ -559,16 +559,22 @@ public class QuerySegmentAggregator {
             if (!SKIP_WHERE.contains(code)) {
 
                 if (Modifier.MISSING.equals(param.getModifier())) {
+                    String valuesTable = tableName(overrideType, param);
+                    final String querySegmentString = querySegment.getQueryString()
+                            .replaceAll(PARAMETER_TABLE_ALIAS + "\\.", valuesTable + ".")
+                            .replaceAll(PARAMETER_TABLE_ALIAS + " ", valuesTable + " ");
+
                     // Append queryString to a separate StringBuilder which will get appended to the where clause last.
                     if (missingModifierWhereClause.length() == 0) {
-                        missingModifierWhereClause.append(querySegment.getQueryString());
+                        missingModifierWhereClause.append(querySegmentString);
                     } else {
                         // If not the first param with a :missing modifier, replace the WHERE with an AND
-                        missingModifierWhereClause.append(querySegment.getQueryString().replaceFirst(WHERE, AND));
+                        missingModifierWhereClause.append(querySegmentString.replaceFirst(WHERE, AND));
                     }
                 } else {
+                    final String paramTableAlias = "param" + i;
+
                     if (!Type.COMPOSITE.equals(param.getType())) {
-                        final String paramTableAlias = "param" + i;
                         if (param.isReverseChained()) {
                             // Join on a select from resource type logical resource table
                             //   JOIN (
